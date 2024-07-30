@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de Contraseñas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+    .password-generator, .password-history {
+      margin-top: 20px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+    }
+    button {
+      cursor: pointer;
+    }
+    .password-history ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    .strength-meter {
+      height: 10px;
+      width: 100%;
+      background-color: #e0e0e0;
+      border-radius: 5px;
+      margin-top: 5px;
+    }
+    .strength-bar {
+      height: 100%;
+      width: 0;
+      border-radius: 5px;
+    }
+    .strength-weak { background-color: red; }
+    .strength-medium { background-color: orange; }
+    .strength-strong { background-color: green; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Generador de Contraseñas</h1>
+    <div class="password-generator">
+      <input type="text" id="password" readonly>
+      <div>
+        <button onclick="generatePassword()">Generar Contraseña</button>
+        <button onclick="copyToClipboard()">Copiar al Portapapeles</button>
+      </div>
+      <div>
+        <label for="password-length">Longitud:</label>
+        <input type="number" id="password-length" min="4" max="32" value="12">
+      </div>
+      <div>
+        <label for="include-uppercase">Incluir Mayúsculas:</label>
+        <input type="checkbox" id="include-uppercase" checked>
+      </div>
+      <div>
+        <label for="include-lowercase">Incluir Minúsculas:</label>
+        <input type="checkbox" id="include-lowercase" checked>
+      </div>
+      <div>
+        <label for="include-numbers">Incluir Números:</label>
+        <input type="checkbox" id="include-numbers" checked>
+      </div>
+      <div>
+        <label for="include-special">Incluir Caracteres Especiales:</label>
+        <input type="checkbox" id="include-special" checked>
+      </div>
+      <div>
+        <button onclick="clearPassword()">Limpiar</button>
+      </div>
+      <div>
+        <button onclick="generateStrongPassword()">Generar Contraseña Segura</button>
+        <button onclick="generateCustomPassword()">Generación Personalizada</button>
+      </div>
+      <div>
+        <label for="password-strength">Fortaleza de la Contraseña:</label>
+        <span id="password-strength"></span>
+        <div class="strength-meter">
+          <div id="strength-bar" class="strength-bar"></div>
+        </div>
+      </div>
+    </div>
+    <div class="password-history">
+      <h2>Contraseñas Generadas:</h2>
+      <ul id="password-list"></ul>
+      <button onclick="clearHistory()">Limpiar Historial</button>
+      <button onclick="downloadPasswords()">Descargar CSV</button>
+    </div>
+  </div>
+
+  <script>
+    let passwords = JSON.parse(localStorage.getItem('passwords')) || [];
+
+    function generatePassword() {
+      const length = document.getElementById('password-length').value;
+      const includeUppercase = document.getElementById('include-uppercase').checked;
+      const includeLowercase = document.getElementById('include-lowercase').checked;
+      const includeNumbers = document.getElementById('include-numbers').checked;
+      const includeSpecial = document.getElementById('include-special').checked;
+
+      let charset = '';
+      if (includeUppercase) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      if (includeLowercase) charset += 'abcdefghijklmnopqrstuvwxyz';
+      if (includeNumbers) charset += '0123456789';
+      if (includeSpecial) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
+
+      let password = '';
+      for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * charset.length);
+        password += charset[randomIndex];
+      }
+
+      document.getElementById('password').value = password;
+      passwords.push(password);
+      updatePasswordList();
+      updatePasswordStrength(password);
+      localStorage.setItem('passwords', JSON.stringify(passwords));
+    }
+
+    function generateStrongPassword() {
+      const length = 16; // Longitud fija para contraseñas seguras
+      const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+      let password = '';
+      for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * charset.length);
+        password += charset[randomIndex];
+      }
+
+      document.getElementById('password').value = password;
+      passwords.push(password);
+      updatePasswordList();
+      updatePasswordStrength(password);
+      localStorage.setItem('passwords', JSON.stringify(passwords));
+    }
+
+    function generateCustomPassword() {
+      const length = document.getElementById('password-length').value;
+      const includeUppercase = document.getElementById('include-uppercase').checked;
+      const includeLowercase = document.getElementById('include-lowercase').checked;
+      const includeNumbers = document.getElementById('include-numbers').checked;
+      const includeSpecial = document.getElementById('include-special').checked;
+
+      let charset = '';
+      if (includeUppercase) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      if (includeLowercase) charset += 'abcdefghijklmnopqrstuvwxyz';
+      if (includeNumbers) charset += '0123456789';
+      if (includeSpecial) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
+
+      let password = '';
+      for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * charset.length);
+        password += charset[randomIndex];
+      }
+
+      document.getElementById('password').value = password;
+      passwords.push(password);
+      updatePasswordList();
+      updatePasswordStrength(password);
+      localStorage.setItem('passwords', JSON.stringify(passwords));
+    }
+
+    function copyToClipboard() {
+      const password = document.getElementById('password').value;
+      navigator.clipboard.writeText(password)
+        .then(() => alert('Contraseña copiada al portapapeles'))
+        .catch(err => alert('Error al copiar la contraseña: ' + err));
+    }
+
+    function clearPassword() {
+      document.getElementById('password').value = '';
+    }
+
+    function updatePasswordList() {
+      const passwordList = document.getElementById('password-list');
+      passwordList.innerHTML = '';
+      passwords.forEach(pwd => {
+        const li = document.createElement('li');
+        li.textContent = pwd;
+        passwordList.appendChild(li);
+      });
+    }
+
+    function clearHistory() {
+      passwords = [];
+      updatePasswordList();
+      localStorage.setItem('passwords', JSON.stringify(passwords));
+    }
+
+    function downloadPasswords() {
+      let csvContent = "data:text/csv;charset=utf-8,Contraseñas\n";
+      passwords.forEach(pwd => {
+        csvContent += pwd + "\n";
+      });
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "passwords.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function updatePasswordStrength(password) {
+      const strengthBar = document.getElementById('strength-bar');
+      const strengthLabel = document.getElementById('password-strength');
+      let strength = 0;
+
+      if (password.length >= 8) strength += 1;
+      if (/[A-Z]/.test(password)) strength += 1;
+      if (/[a-z]/.test(password)) strength += 1;
+      if (/\d/.test(password)) strength += 1;
+      if (/[\W_]/.test(password)) strength += 1;
+
+      strengthBar.className = 'strength-bar';
+      if (strength <= 2) {
+        strengthBar.classList.add('strength-weak');
+        strengthLabel.textContent = 'Débil';
+      } else if (strength === 3) {
+        strengthBar.classList.add('strength-medium');
+        strengthLabel.textContent = 'Mediana';
+      } else {
+        strengthBar.classList.add('strength-strong');
+        strengthLabel.textContent = 'Fuerte';
+      }
+
+      strengthBar.style.width = (strength * 20) + '%';
+    }
+
+    updatePasswordList();
+  </script>
+</body>
+</html>
